@@ -97,14 +97,18 @@ img { max-width: 100%; display: block; }
 }
 
 .hero__crest {
+  /* Sized/positioned to match the reference design exactly (measured
+     directly off the reference PNG as % of the photo frame; this PNG is
+     cropped tight to its visible content, no transparent padding to skew
+     the numbers). */
   position: absolute;
   z-index: 2;
-  top: 7.5vh;
-  right: -2.8vw;
-  width: 31vw;
-  max-width: 420px;
-  min-width: 140px;
-  height: auto;
+  top: 27.6vh;
+  right: 2.1vw;
+  height: 52vh;
+  width: auto;
+  max-height: 450px;
+  min-height: 170px;
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.35));
 }
 
@@ -147,8 +151,8 @@ img { max-width: 100%; display: block; }
     height: auto;
   }
   .hero__crest {
-    width: 34vw;
+    height: 22vh;
     top: 3vh;
-    right: -3vw;
+    right: 4vw;
   }
 }
