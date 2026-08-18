@@ -14,7 +14,7 @@
 
 <header class="hero">
 
-  <!-- Background video is populated/optimized by the video-loading subsystem (js/video-loader.js). -->
+  <!-- Loading/play control lives in js/video-loader.js (connection + reduced-motion aware). -->
   <div class="hero__video-wrap">
     <video
       class="hero__video"
@@ -26,7 +26,10 @@
       preload="none"
       aria-hidden="true"
     >
-      <!-- <source> elements are injected/managed by js/video-loader.js based on viewport + connection -->
+      <source src="assets/video/mobile-av1.webm" type='video/webm; codecs="av01.0.05M.08"' media="(max-width: 760px)">
+      <source src="assets/video/mobile-h264.mp4" type="video/mp4" media="(max-width: 760px)">
+      <source src="assets/video/desktop-av1.webm" type='video/webm; codecs="av01.0.08M.08"'>
+      <source src="assets/video/desktop-h264.mp4" type="video/mp4">
     </video>
     <img
       class="hero__fallback-image"

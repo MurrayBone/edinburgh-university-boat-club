@@ -1,12 +1,16 @@
-/* Liquid-glass nav button styling.
+/* Nav buttons: fully transparent (just a hairline border) at rest, matching
+   the reference design exactly — the water/buoys show through crisp and
+   un-blurred. The liquid-glass treatment (frosted blur, edge refraction,
+   specular gleam) only appears as an interactive affordance on hover, press,
+   or keyboard focus — no JS class-toggling needed, plain CSS pseudo-classes.
    Layers, from back to front, per button:
-     1. .glass-button          — frosted base: blurred/saturated backdrop + tinted fill
-     2. .glass-button::before  — edge-weighted refraction (SVG feDisplacementMap), masked
-                                  so the bending is strongest near the rim and fades to
-                                  ~nothing in the centre, mimicking curved glass optics
+     1. .glass-button          — transparent at rest; frosted fill + blur when active
+     2. .glass-button::before  — edge-weighted refraction (SVG feDisplacementMap),
+                                  masked so the bending is strongest near the rim
+                                  and fades to ~nothing in the centre; hidden at rest
      3. (text content)         — the link's own label, painted above ::before
-     4. .glass-button::after   — soft specular gleam that can track the pointer via the
-                                  --x/--y custom properties set in js/buttons.js
+     4. .glass-button::after   — soft specular gleam that can track the pointer via
+                                  the --x/--y custom properties set in js/buttons.js
    See js/buttons.js for the optional pointer-tracked highlight logic. */
 
 .glass-nav {
@@ -25,14 +29,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.1rem 1.5rem;
-  min-height: 64px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.38);
+  height: 100%;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.85);
   color: #fff;
   font-family: inherit;
   font-weight: 400;
-  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  font-size: clamp(0.85rem, 1.1vw, 1.05rem);
   text-decoration: none;
   text-align: center;
   white-space: nowrap;
@@ -41,7 +46,19 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 
-  /* Frosted fill: brighter along the top rim, fading down, over a low-opacity tint. */
+  background: transparent;
+
+  transform: scale(var(--glass-scale));
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    -webkit-backdrop-filter 220ms ease,
+    backdrop-filter 220ms ease;
+}
+
+/* Frosted glass fill — only switched on for hover/press/keyboard-focus. */
+.glass-button:is(:hover, :focus-visible, :active) {
   background-image: linear-gradient(
     165deg,
     rgba(255, 255, 255, 0.32) 0%,
@@ -54,27 +71,18 @@
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%) brightness(1.05);
   backdrop-filter: blur(var(--glass-blur)) saturate(165%) brightness(1.05);
 
-  /* Crisp top-left rim light + soft bottom-right shade, plus an outer lift shadow. */
   box-shadow:
     inset 1px 1px 0 rgba(255, 255, 255, 0.55),
     inset -1px -1px 0 rgba(0, 0, 0, 0.18),
     inset 0 8px 16px -10px rgba(255, 255, 255, 0.4),
     0 10px 26px rgba(0, 0, 0, 0.28),
     0 2px 8px rgba(0, 0, 0, 0.18);
-
-  transform: scale(var(--glass-scale));
-  transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 220ms ease,
-    background-color 220ms ease,
-    -webkit-backdrop-filter 220ms ease,
-    backdrop-filter 220ms ease;
 }
 
 /* Edge-weighted refraction: an SVG feDisplacementMap filter (see the inline <svg>
    at the top of .hero__nav) bends the backdrop through this pseudo-layer. A radial
    mask keeps the distortion concentrated at the rim and nearly invisible at centre,
-   like light bending through the curved edge of real glass. */
+   like light bending through the curved edge of real glass. Hidden until active. */
 .glass-button::before {
   content: "";
   position: absolute;
@@ -84,6 +92,10 @@
   backdrop-filter: url(#glass-distortion) blur(1px);
   -webkit-mask-image: radial-gradient(ellipse at center, transparent 45%, #000 92%);
   mask-image: radial-gradient(ellipse at center, transparent 45%, #000 92%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.glass-button:is(:hover, :focus-visible, :active)::before {
   opacity: 0.85;
 }
 
@@ -101,15 +113,17 @@
     transparent 70%
   );
   mix-blend-mode: overlay;
-  opacity: 0.6;
+  opacity: 0;
   transition: opacity 220ms ease;
+}
+.glass-button:is(:hover, :focus-visible, :active)::after {
+  opacity: 0.6;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .glass-button:hover {
     --glass-blur: 18px;
     --glass-scale: 1.015;
-    background-color: rgba(255, 255, 255, 0.1);
     box-shadow:
       inset 1px 1px 0 rgba(255, 255, 255, 0.65),
       inset -1px -1px 0 rgba(0, 0, 0, 0.18),
@@ -122,17 +136,11 @@
 .glass-button:active {
   --glass-blur: 20px;
   --glass-scale: 0.965;
-  background-color: rgba(255, 255, 255, 0.14);
   box-shadow:
     inset 1px 1px 0 rgba(255, 255, 255, 0.7),
     inset -1px -1px 0 rgba(0, 0, 0, 0.22),
     inset 0 3px 10px rgba(0, 0, 0, 0.15),
     0 4px 14px rgba(0, 0, 0, 0.24);
-}
-
-.glass-button:hover::after,
-.glass-button:active::after {
-  opacity: 1;
 }
 
 .glass-button:focus-visible {
@@ -151,14 +159,14 @@
   }
 }
 
-/* Browsers without backdrop-filter support: drop the blur/distortion trickery and
-   fall back to a solid, legible dark fill. */
+/* Browsers without backdrop-filter support: fall back to a solid, legible dark
+   fill instead of the frosted look, still only on hover/press/focus. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-button {
+  .glass-button:is(:hover, :focus-visible, :active) {
     background-image: none;
     background-color: rgba(12, 20, 28, 0.78);
   }
-  .glass-button::before {
+  .glass-button:is(:hover, :focus-visible, :active)::before {
     display: none;
   }
 }
