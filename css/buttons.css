@@ -1,0 +1,164 @@
+/* Liquid-glass nav button styling.
+   Layers, from back to front, per button:
+     1. .glass-button          — frosted base: blurred/saturated backdrop + tinted fill
+     2. .glass-button::before  — edge-weighted refraction (SVG feDisplacementMap), masked
+                                  so the bending is strongest near the rim and fades to
+                                  ~nothing in the centre, mimicking curved glass optics
+     3. (text content)         — the link's own label, painted above ::before
+     4. .glass-button::after   — soft specular gleam that can track the pointer via the
+                                  --x/--y custom properties set in js/buttons.js
+   See js/buttons.js for the optional pointer-tracked highlight logic. */
+
+.glass-nav {
+  position: relative;
+}
+
+.glass-button {
+  --x: 50%;
+  --y: 35%;
+  --glass-blur: 14px;
+  --glass-scale: 1;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.1rem 1.5rem;
+  min-height: 64px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 400;
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
+  /* Frosted fill: brighter along the top rim, fading down, over a low-opacity tint. */
+  background-image: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  background-color: rgba(255, 255, 255, 0.07);
+
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%) brightness(1.05);
+  backdrop-filter: blur(var(--glass-blur)) saturate(165%) brightness(1.05);
+
+  /* Crisp top-left rim light + soft bottom-right shade, plus an outer lift shadow. */
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.55),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.18),
+    inset 0 8px 16px -10px rgba(255, 255, 255, 0.4),
+    0 10px 26px rgba(0, 0, 0, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+
+  transform: scale(var(--glass-scale));
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    -webkit-backdrop-filter 220ms ease,
+    backdrop-filter 220ms ease;
+}
+
+/* Edge-weighted refraction: an SVG feDisplacementMap filter (see the inline <svg>
+   at the top of .hero__nav) bends the backdrop through this pseudo-layer. A radial
+   mask keeps the distortion concentrated at the rim and nearly invisible at centre,
+   like light bending through the curved edge of real glass. */
+.glass-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: url(#glass-distortion) blur(1px);
+  backdrop-filter: url(#glass-distortion) blur(1px);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 45%, #000 92%);
+  mask-image: radial-gradient(ellipse at center, transparent 45%, #000 92%);
+  opacity: 0.85;
+}
+
+/* Pointer-tracked specular gleam. Defaults to a fixed position (--x/--y above) so it
+   still looks intentional on touch devices that never fire pointermove. */
+.glass-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120px 120px at var(--x) var(--y),
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.14) 45%,
+    transparent 70%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  transition: opacity 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-button:hover {
+    --glass-blur: 18px;
+    --glass-scale: 1.015;
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 1px 1px 0 rgba(255, 255, 255, 0.65),
+      inset -1px -1px 0 rgba(0, 0, 0, 0.18),
+      inset 0 10px 18px -10px rgba(255, 255, 255, 0.5),
+      0 14px 32px rgba(0, 0, 0, 0.32),
+      0 3px 10px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.glass-button:active {
+  --glass-blur: 20px;
+  --glass-scale: 0.965;
+  background-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.22),
+    inset 0 3px 10px rgba(0, 0, 0, 0.15),
+    0 4px 14px rgba(0, 0, 0, 0.24);
+}
+
+.glass-button:hover::after,
+.glass-button:active::after {
+  opacity: 1;
+}
+
+.glass-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-button {
+    transition: none;
+  }
+  .glass-button,
+  .glass-button:hover,
+  .glass-button:active {
+    --glass-scale: 1;
+  }
+}
+
+/* Browsers without backdrop-filter support: drop the blur/distortion trickery and
+   fall back to a solid, legible dark fill. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-button {
+    background-image: none;
+    background-color: rgba(12, 20, 28, 0.78);
+  }
+  .glass-button::before {
+    display: none;
+  }
+}

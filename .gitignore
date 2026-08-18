@@ -1,0 +1,7 @@
+.DS_Store
+
+# Raw, unoptimized source footage/design references — not needed to serve the
+# site (see assets/ for the web-ready derived versions) and too large for git
+# (GitHub blocks files over 100MB).
+Images:Assets/
+Screenshot*.png
